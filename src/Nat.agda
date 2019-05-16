@@ -42,3 +42,8 @@ m > n = ¬ (m ≤ n)
 
 _≥_ : ℕ → ℕ → 𝔹
 m ≥ n = ¬ (m < n)
+
+max : ℕ → ℕ → ℕ
+max O m = m
+max n O = n
+max (S n) (S m) = max n m
