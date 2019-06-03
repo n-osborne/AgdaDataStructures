@@ -13,8 +13,8 @@ module AdjList where
   data Adj (E : Set) : Set where
     mkAdj : E → List E → Adj E
     
-  data Graph (E : Set) : Set where
-    mkGraph : List (Adj E) → Graph E
+  data Graph {n} (E : Set) : Set where
+    mkGraph : Vec (Adj E) n → Graph E
 
 module Inductive where
   Node = ℕ
