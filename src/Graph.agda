@@ -2,8 +2,13 @@ module Graph where
 
 open import Data.List
 open import Data.Nat
+open import Data.Bool
 open import Data.Product
 open import Data.Vec
+open import Data.Maybe
+open import Relation.Nullary
+open import Relation.Nullary.Decidable
+open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
 
 module AdjList where
 
@@ -11,10 +16,50 @@ module AdjList where
     mkNode : E → Node E
 
   data Adj (E : Set) : Set where
-    mkAdj : E → List E → Adj E
-    
-  data Graph {n} (E : Set) : Set where
-    mkGraph : Vec (Adj E) n → Graph E
+    mkAdj : Node E → List (Node E) → Adj E
+
+  node : {E : Set} → Adj E → Node E
+  node (mkAdj n _) = n
+  
+  adj : {E : Set} → Adj E → List (Node E)
+  adj (mkAdj _ l) = l
+  
+  data Graph (E : Set) : Set where
+    mkGraph : List (Adj E) → Graph E
+
+  -- successors : {E : Set} {{_ : Dec E}} → Graph E → Node E → Maybe (List (Node E))
+  -- successors (mkGraph []) _      = nothing
+  -- successors (mkGraph ((mkAdj (mkNode n₁) l) ∷ xs)) (mkNode n₂) with ⌊ n₁ ≡ n₂ ⌋
+  -- ... | true  = just l
+  -- ... | false = successors (mkGraph xs) (mkNode n₂)
+
+
+module AdjListNat where
+
+  data Node : Set where
+    mkNode : ℕ → Node
+
+  data Adj : Set where
+    mkAdj : Node → List Node → Adj
+
+  data Graph : Set where
+    mkGraph : List Adj → Graph
+
+  node : Adj → Node
+  node (mkAdj n _) = n
+
+  adj : Adj → List Node
+  adj (mkAdj _ l) = l
+
+  val : Node → ℕ
+  val (mkNode n) = n
+
+  successors :  Graph → Node → Maybe (List Node)
+  successors (mkGraph []) _      = nothing
+  successors (mkGraph ((mkAdj (mkNode n₁) l) ∷ xs)) (mkNode n₂) with n₁ ≡ᵇ n₂
+  ... | true  = just l
+  ... | false = successors (mkGraph xs) (mkNode n₂)
+
 
 module Inductive where
   Node = ℕ
