@@ -54,12 +54,20 @@ module AdjListNat where
   val : Node → ℕ
   val (mkNode n) = n
 
-  successors :  Graph → Node → Maybe (List Node)
-  successors (mkGraph []) _      = nothing
-  successors (mkGraph ((mkAdj (mkNode n₁) l) ∷ xs)) (mkNode n₂) with n₁ ≡ᵇ n₂
-  ... | true  = just l
-  ... | false = successors (mkGraph xs) (mkNode n₂)
+  _ⁿ≡ᵇ_ : Node → Node → Bool
+  (mkNode n₁) ⁿ≡ᵇ (mkNode n₂) = n₁ ≡ᵇ n₂
+  
+  successors :  Graph → Node → (List Node)
+  successors (mkGraph []) _      = []
+  successors (mkGraph ((mkAdj n₁ l) ∷ xs)) n₂ with n₁ ⁿ≡ᵇ n₂
+  ... | true  = l
+  ... | false = successors (mkGraph xs) n₂
 
+  predecessors : Graph → Node → List Node
+  predecessors (mkGraph []) _    = []
+  predecessors (mkGraph ((mkAdj n₁ l) ∷ xs)) n₂ with any (λ n → n₂ ⁿ≡ᵇ n) l
+  ... | true  = n₁ ∷ (predecessors (mkGraph xs) n₂)
+  ... | false = (predecessors (mkGraph xs) n₂)
 
 module Inductive where
   Node = ℕ
