@@ -80,6 +80,39 @@ module AdjList (E : Set) (_===_ : E → E → Bool) where
   ... | true  = n₁ ∷ (predecessors (mkGraph xs) n₂)
   ... | false = (predecessors (mkGraph xs) n₂)
 
+module AdjVec (E : Set) (_===_ : E → E → Bool) where
+-- this module defines Graph the same way as AdjList but with a Vector
+
+  data Node : Set where
+    mkNode : E → Node
+
+  _==_ : Node → Node → Bool
+  (mkNode n₁) == (mkNode n₂) = n₁ === n₂
+  
+  data Adj : Set where
+    mkAdj : Node → List Node → Adj
+
+  -- Graph is a familly of type (dependent type) indexed on the number of nodes
+  data Graph : ℕ → Set where
+    mkGraph : ∀ {n : ℕ} → Vec Adj n → Graph n
+
+  successors : ∀ {n} → Graph n → Node → List Node
+  successors (mkGraph v) n = go v n
+    where
+    go : ∀ {n} → Vec Adj n → Node → List Node
+    go [] _ = []
+    go ((mkAdj n₁ l) ∷ xs) n₂ with n₁ == n₂
+    ... | true  = l
+    ... | false = go xs n₂
+
+  predecessors : ∀ {n} → Graph n → Node → List Node
+  predecessors (mkGraph v) n = go [] v n
+    where
+    go : ∀ {n} → List Node → Vec Adj n → Node → List Node
+    go acc [] _ = acc
+    go acc ((mkAdj n₁ l) ∷ xs) n₂ with any (_==_ n₂) l
+    ... | true  = go (n₁ ∷ acc) xs n₂
+    ... | false = go acc xs n₂
 
 module Inductive where
   Node = ℕ
