@@ -1,6 +1,10 @@
 module List where
 
 open import Nat
+open import Bool
+open import TypeClasses
+
+open Eq {{...}} public
 
 data List (A : Set) : Set where
   []   : List A
@@ -32,3 +36,7 @@ reverse' xs = reverseAux xs []
 length : {A : Set} → List A → ℕ
 length []        = O
 length (x :: xs) = S (length xs)
+
+elem : {A : Set} ⦃ eqA : Eq A ⦄ → A → List A → 𝔹
+elem _ [] = false
+elem a (x :: xs) = (a == x) ∨ (elem a xs)
