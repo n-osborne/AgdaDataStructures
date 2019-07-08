@@ -2,6 +2,7 @@ module Iterator where
 
 open import List
 open import Bool
+open import Option
 open import TypeClasses
 
 open Eq {{...}} public
@@ -25,3 +26,8 @@ elemAfter a (_ , l) = elem a l
 
 elemBefore : {A : Set} ⦃ eqA : Eq A ⦄ → A → Iterator A → 𝔹
 elemBefore a (l , _) = elem a l
+
+read : {A : Set} → Iterator A → Option A
+read (_ , []) = nothing
+read (_ , (x :: _)) = just x
+
