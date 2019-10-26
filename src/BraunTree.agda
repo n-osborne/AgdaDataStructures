@@ -71,13 +71,25 @@ insert-check a (node x l r) | same-size-bal x l r n₁≡n₂ = node x (insert-c
 insert-check a (node x l r) | suc-size-bal x l r n₁≡sn₂ = node x (insert-check a r) l
 insert-check a (node x l r) | not-balanced _ _ _ _ _    = empty
 
-insert-balanced : {A : Set}(a : A)(t : Tree A) → IsBalanced (insert a t)
-insert-balanced a empty = same-size-bal a empty empty refl
-insert-balanced a (node x l r) with isBalanced? (node x l r)
-insert-balanced a (node x l r) | same-size-bal x l r sl≡sr       = suc-size-bal x  (insert a r) l {!!}
+record BalancedTree (A : Set) : Set where
+  constructor BTree
+  field
+    tree  : Tree A
+    proof : IsBalanced tree
+
+insert-balanced : {A : Set}(a : A)(t : Tree A) → BalancedTree A
+insert-balanced a empty = BTree (node a empty empty) (same-size-bal a empty empty refl)
+insert-balanced a (node x l r) with insert-balanced a r
+insert-balanced a (node x l r) | BTree empty empty-bal = BTree (node a empty empty) (same-size-bal a empty empty refl)
+insert-balanced a (node x l r) | BTree (node xr lr rr) (same-size-bal xr lr rr p)    = BTree (node x (node xr lr rr) l) {!!}
+insert-balanced a (node x l r) | BTree (node xr lr rr) (suc-size-bal xr lr rr p)     = BTree (node x (node xr lr rr) l) {!!}
+insert-balanced a (node x l r) | BTree (node xr lr rr) (not-balanced xr lr rr p1 p2) = BTree (node x (node xr lr rr) l) {!!}
+
+{--
+same-size-bal x l r sl≡sr       = suc-size-bal x  (insert a r) l {!!}
 insert-balanced a (node x l r) | suc-size-bal x l r sl≡ssr       = same-size-bal x (insert a r) l {!!}
 insert-balanced a (node x l r) | not-balanced s l r sl≢sr sl≢ssr = not-balanced x  (insert a r) l {!!} {!!}
-{--
+
 lemma-insert-inc-size : ∀ {A : Set}(a : A)(t : Tree A) → size (insert a t) ≡ suc (size t)
 lemma-insert-inc-size a empty = refl
 lemma-insert-inc-size a (node x l r) rewrite +-suc (size r) (size l) = cong suc {!!}    --  (lemma-insert-inc-size a r)
