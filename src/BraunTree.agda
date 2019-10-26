@@ -87,12 +87,17 @@ balancedTree (node x l r) | too-far sl sr sl≢sr sl≢ssr = BTree (node x l r) 
 
 insert-balanced : {A : Set}(a : A)(t : Tree A) → BalancedTree A
 insert-balanced a empty = BTree (node a empty empty) (same-size-bal a empty empty refl)
-insert-balanced a (node x l r) with insert-balanced a r
-insert-balanced a (node x l r) | BTree empty empty-bal = BTree (node x (node a empty empty) empty) (suc-size-bal x (node a empty empty) empty refl)
-insert-balanced a (node x l r) | BTree (node xr lr rr) (same-size-bal xr lr rr slr≡srr) = BTree (node x (node xr lr rr) l) {!!}
-insert-balanced a (node x l r) | BTree (node xr lr rr) (suc-size-bal xr lr rr slr≡ssrr) = BTree (node x (node xr lr rr) l) {!!}
-insert-balanced a (node x l r) | BTree (node xr lr rr) (not-balanced xr lr rr p1 p2)    = BTree (node x (node xr lr rr) l) {!!}
-
+insert-balanced a t@(node x l r) with isBalanced? t | insert-balanced a r
+insert-balanced a t@(node x l r) | _ | BTree empty empty-bal = BTree (node x (node a empty empty) empty) (suc-size-bal x (node a empty empty) empty refl)
+insert-balanced a t@(node x l r) | same-size-bal .x .l .r p     | BTree (node xr lr rr) (same-size-bal xr lr rr slr≡srr)          = BTree (node x (node xr lr rr) l) {!!}
+insert-balanced a t@(node x l r) | same-size-bal .x .l .r p     | BTree (node xr lr rr) (suc-size-bal  xr lr rr slr≡ssrr)         = BTree (node x (node xr lr rr) l) {!!}
+insert-balanced a t@(node x l r) | same-size-bal .x .l .r p     | BTree (node xr lr rr) (not-balanced  xr lr rr slr≢srr slt≢ssrr) = BTree (node x (node xr lr rr) l) {!!}
+insert-balanced a t@(node x l r) | suc-size-bal .x .l .r p      | BTree (node xr lr rr) (same-size-bal xr lr rr slr≡srr)          = BTree (node x (node xr lr rr) l) {!!}
+insert-balanced a t@(node x l r) | suc-size-bal .x .l .r p      | BTree (node xr lr rr) (suc-size-bal  xr lr rr slr≡srr)          = BTree (node x (node xr lr rr) l) {!!}
+insert-balanced a t@(node x l r) | suc-size-bal .x .l .r p      | BTree (node xr lr rr) (not-balanced  xr lr rr slr≢srr slt≢ssrr) = BTree (node x (node xr lr rr) l) {!!}
+insert-balanced a t@(node x l r) | not-balanced .x .l .r p1 p2  | BTree (node xr lr rr) (same-size-bal xr lr rr slr≡srr)          = BTree (node x (node xr lr rr) l) {!!}
+insert-balanced a t@(node x l r) | not-balanced .x .l .r p1 p2  | BTree (node xr lr rr) (suc-size-bal  xr lr rr slr≡srr)          = BTree (node x (node xr lr rr) l) {!!}
+insert-balanced a t@(node x l r) | not-balanced .x .l .r p1 p2  | BTree (node xr lr rr) (not-balanced  xr lr rr slr≢srr slt≢ssrr) = BTree (node x (node xr lr rr) l) {!!}
 {--
 
 lemma-insert-inc-size : ∀ {A : Set}(a : A)(t : Tree A) → size (insert a t) ≡ suc (size t)
