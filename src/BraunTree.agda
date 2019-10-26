@@ -71,62 +71,35 @@ insert-check a (node x l r) | same-size-bal x l r n₁≡n₂ = node x (insert-c
 insert-check a (node x l r) | suc-size-bal x l r n₁≡sn₂ = node x (insert-check a r) l
 insert-check a (node x l r) | not-balanced _ _ _ _ _    = empty
 
+-- A record type to contain a Tree and its balancinf together
 record BalancedTree (A : Set) : Set where
   constructor BTree
   field
     tree  : Tree A
     proof : IsBalanced tree
 
+balancedTree : {A : Set} → Tree A → BalancedTree A
+balancedTree empty = BTree empty empty-bal
+balancedTree (node x l r) with (size l) eq-or-suc? (size r)
+balancedTree (node x l r) | eq sl sr sl≡sr             = BTree (node x l r) (same-size-bal x l r sl≡sr)
+balancedTree (node x l r) | is-suc sl sr sl≡ssr        = BTree (node x l r) (suc-size-bal x l r sl≡ssr)
+balancedTree (node x l r) | too-far sl sr sl≢sr sl≢ssr = BTree (node x l r) (not-balanced x l r sl≢sr sl≢ssr)
+
 insert-balanced : {A : Set}(a : A)(t : Tree A) → BalancedTree A
 insert-balanced a empty = BTree (node a empty empty) (same-size-bal a empty empty refl)
 insert-balanced a (node x l r) with insert-balanced a r
-insert-balanced a (node x l r) | BTree empty empty-bal = BTree (node a empty empty) (same-size-bal a empty empty refl)
-insert-balanced a (node x l r) | BTree (node xr lr rr) (same-size-bal xr lr rr p)    = BTree (node x (node xr lr rr) l) {!!}
-insert-balanced a (node x l r) | BTree (node xr lr rr) (suc-size-bal xr lr rr p)     = BTree (node x (node xr lr rr) l) {!!}
-insert-balanced a (node x l r) | BTree (node xr lr rr) (not-balanced xr lr rr p1 p2) = BTree (node x (node xr lr rr) l) {!!}
+insert-balanced a (node x l r) | BTree empty empty-bal = BTree (node x (node a empty empty) empty) (suc-size-bal x (node a empty empty) empty refl)
+insert-balanced a (node x l r) | BTree (node xr lr rr) (same-size-bal xr lr rr slr≡srr) = BTree (node x (node xr lr rr) l) {!!}
+insert-balanced a (node x l r) | BTree (node xr lr rr) (suc-size-bal xr lr rr slr≡ssrr) = BTree (node x (node xr lr rr) l) {!!}
+insert-balanced a (node x l r) | BTree (node xr lr rr) (not-balanced xr lr rr p1 p2)    = BTree (node x (node xr lr rr) l) {!!}
 
 {--
-same-size-bal x l r sl≡sr       = suc-size-bal x  (insert a r) l {!!}
-insert-balanced a (node x l r) | suc-size-bal x l r sl≡ssr       = same-size-bal x (insert a r) l {!!}
-insert-balanced a (node x l r) | not-balanced s l r sl≢sr sl≢ssr = not-balanced x  (insert a r) l {!!} {!!}
 
 lemma-insert-inc-size : ∀ {A : Set}(a : A)(t : Tree A) → size (insert a t) ≡ suc (size t)
 lemma-insert-inc-size a empty = refl
 lemma-insert-inc-size a (node x l r) rewrite +-suc (size r) (size l) = cong suc {!!}    --  (lemma-insert-inc-size a r)
 
-lemma-insert-braun-tree : ∀ {A : Set}(a : A)(t : Tree A) → IsBalanced t → IsBalanced (insert a t)
-lemma-insert-braun-tree a empty empyt-bal = nod-bal a empty empty (inj₁ refl)
-lemma-insert-braun-tree a (node x l r) (nod-bal x l r (inj₁ sl≡sr))  = nod-bal x (insert a r) l (inj₂ {!!})
-lemma-insert-braun-tree a (node x l r) (nod-bal x l r (inj₂ sl≡ssr)) = nod-bal x (insert a r) l (inj₁ {!!})
-
-
--- same idea than insert-check, but take only balanced trees as a proof must be given
-insert-check₂ : {A : Set}(a : A)(t : Tree A)(prf : IsBalanced t) → Tree A
-insert-check₂ a empty prf = empty
-insert-check₂ a (node x l r) (nod-bal x l r (inj₁ sl≡sr))  = r 
-insert-check₂ a (node x l r) (nod-bal x l r (inj₂ sl≡ssr)) = r
 
 -}
 
 
-
-
--- View for BraunTree
-data IsItBraunTree {A : Set} : Tree A → Set where
-  empt-braun   : IsItBraunTree empty
-  sing-braun   : (a : A) → IsItBraunTree (node a empty empty)
---  node-braun   : (a : A)(l r : Tree A) → 
-  -- node-braun   : (a : A)(l r : Tree A) → (isBalanced? l ≡ nod-bal _ _ _ _) → isBalanced? (node a l r) ≡ nod-bal a l r _ → IsItBraunTree (node a l r)
-  -- size-left    : (a : A)(l r : Tree A) → isBalanced? l ≡ not-bal _ _ _ _ _ → IsItBraunTree (node a l r) 
-  -- size-right   : (a : A)(l r : Tree A) → isBalanced? r ≡ not-bal _ _ _ _ _ → IsItBraunTree (node a l r) 
-  -- not-balanced : (a : A)(l r : Tree A) → isBalanced? (node a l r) ≡ not-bal _ _ _ _ _ → IsItBraunTree (node a l r)
-  
-
-{--
-isBraunTree? : {A : Set}(t : Tree A) → IsItBraunTree t
-isBraunTree? empty = emptyBraun
-isBraunTree? (node x l r) with (size l) eq-or-suc? (size r) 
-isBraunTree? (node x l r) | eq n₁ n₂ n₁≡n₂              = nodeBraun x l r (inj₁ n₁≡n₂)
-isBraunTree? (node x l r) | is-suc n₁ n₂ n₁≡sn₂         = nodeBraun x l r (inj₂ n₁≡sn₂) 
-isBraunTree? (node x l r) | too-far n₁ n₂ n₁≢n₂ n₁≢sn₂  = not-Braun x l r n₁≢n₂ n₁≢sn₂
--}
