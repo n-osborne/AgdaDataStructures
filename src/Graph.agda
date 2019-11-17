@@ -1,130 +1,64 @@
 module Graph where
 
-open import Data.List
-open import Data.Nat
-open import Data.Bool
-open import Data.Product
-open import Data.Vec
-open import Data.Maybe
-open import Relation.Nullary
-open import Relation.Nullary.Decidable
-open import Relation.Binary.PropositionalEquality as Eq using (_≡_; refl)
+module InductiveGraph where
 
+open import List
+open import Product
+open import IdentityRelation
+open import Function
 
-module AdjListNat where
+variable
+  N : Set
 
-  data Node : Set where
-    mkNode : ℕ → Node
-
-  data Adj : Set where
-    mkAdj : Node → List Node → Adj
-
-  data Graph : Set where
-    mkGraph : List Adj → Graph
-
-  node : Adj → Node
-  node (mkAdj n _) = n
-
-  adj : Adj → List Node
-  adj (mkAdj _ l) = l
-
-  val : Node → ℕ
-  val (mkNode n) = n
-
-  _==_ : Node → Node → Bool
-  (mkNode n₁) == (mkNode n₂) = n₁ ≡ᵇ n₂
+data Adj N : Set where
+  adj : List N → Adj N
   
-  successors :  Graph → Node → (List Node)
-  successors (mkGraph []) _      = []
-  successors (mkGraph ((mkAdj n₁ l) ∷ xs)) n₂ with n₁ == n₂
-  ... | true  = l
-  ... | false = successors (mkGraph xs) n₂
+data Context N : Set where
+  context : Adj N → N → Adj N → Context N
 
-  predecessors : Graph → Node → List Node
-  predecessors (mkGraph []) _    = []
-  predecessors (mkGraph ((mkAdj n₁ l) ∷ xs)) n₂ with any (λ n → n₂ == n) l
-  ... | true  = n₁ ∷ (predecessors (mkGraph xs) n₂)
-  ... | false = (predecessors (mkGraph xs) n₂)
+data Graph N : Set where
+  empty : Graph N
+  _&_   : Context N → Graph N → Graph N
 
 
-module AdjList (E : Set) (_===_ : E → E → Bool) where
--- this module is just a polymorphic version of the precedent one
+gmap : (Context N → Context N) → Graph N → Graph N
+gmap f empty = empty
+gmap f (c & g) = f c & gmap f g
 
-  data Node : Set where
-    mkNode : E → Node
+gmap-id : ∀ (g : Graph N) → gmap id g ≡ id g
+gmap-id empty = refl
+gmap-id (x & g) = {!!}
 
-  _==_ : Node → Node → Bool
-  (mkNode n₁) == (mkNode n₂) = n₁ === n₂
-  
-  data Adj : Set where
-    mkAdj : Node → List Node → Adj
+swap : Context N → Context N
+swap (context l n r) = context l n r
 
-  node : Adj → Node
-  node (mkAdj n _) = n
-  
-  adj : Adj → List Node
-  adj (mkAdj _ l) = l
-  
-  data Graph : Set where
-    mkGraph : List Adj → Graph
+swap-swap-id : ∀ (c : Context N) → (swap ∘ swap) c ≡ c
+swap-swap-id c = {!!}
 
-  successors :  Graph → Node → (List Node)
-  successors (mkGraph []) _      = []
-  successors (mkGraph ((mkAdj n₁ l) ∷ xs)) n₂ with n₁ == n₂
-  ... | true  = l
-  ... | false = successors (mkGraph xs) n₂
+grev : Graph N → Graph N
+grev = gmap swap
 
-  predecessors : Graph → Node → List Node
-  predecessors (mkGraph []) _    = []
-  predecessors (mkGraph ((mkAdj n₁ l) ∷ xs)) n₂ with any (λ n → n₂ == n) l
-  ... | true  = n₁ ∷ (predecessors (mkGraph xs) n₂)
-  ... | false = (predecessors (mkGraph xs) n₂)
 
-module AdjVec (E : Set) (_===_ : E → E → Bool) where
--- this module defines Graph the same way as AdjList but with a Vector
+gmap-fusion : ∀ (f g : Context N → Context N)(gr : Graph N) → ((gmap g) ∘ (gmap f)) gr ≡ gmap (g ∘ f) gr
+gmap-fusion g f empty    = refl
+gmap-fusion g f (x & gr) = {!!}
 
-  data Node : Set where
-    mkNode : E → Node
+grev∘grev-is-id : ∀ (g : Graph N) → (grev ∘ grev) g ≡ id g
+grev∘grev-is-id g = {!!}
 
-  _==_ : Node → Node → Bool
-  (mkNode n₁) == (mkNode n₂) = n₁ === n₂
-  
-  data Adj : Set where
-    mkAdj : Node → List Node → Adj
+ufold : {B : Set} → (Context N → B → B) → B → Graph N → B
+ufold f b empty = b
+ufold f b (c & g) = f c (ufold f b g)
 
-  -- Graph is a familly of type (dependent type) indexed on the number of nodes
-  data Graph : ℕ → Set where
-    mkGraph : ∀ {n : ℕ} → Vec Adj n → Graph n
+nodes : Graph N → List N
+nodes = ufold f []
+  where
+    f : Context N → List N → List N
+    f (context l n r) = n ::_
 
-  successors : ∀ {n} → Graph n → Node → List Node
-  successors (mkGraph v) n = go v n
-    where
-    go : ∀ {n} → Vec Adj n → Node → List Node
-    go [] _ = []
-    go ((mkAdj n₁ l) ∷ xs) n₂ with n₁ == n₂
-    ... | true  = l
-    ... | false = go xs n₂
+-- gsuc and gpred need equality on N and a way to handle n not occuring in g
+gsucc : Graph N → N → List N
+gsucc g n = {!!}
 
-  predecessors : ∀ {n} → Graph n → Node → List Node
-  predecessors (mkGraph v) n = go [] v n
-    where
-    go : ∀ {n} → List Node → Vec Adj n → Node → List Node
-    go acc [] _ = acc
-    go acc ((mkAdj n₁ l) ∷ xs) n₂ with any (_==_ n₂) l
-    ... | true  = go (n₁ ∷ acc) xs n₂
-    ... | false = go acc xs n₂
-
-module Inductive where
-  Node = ℕ
-  
-  data Adj (E : Set) : Set where
-    mkAdj : E → Node → Adj E
-  
-  data Context (A E : Set) : Set where
-    mkContext : List (Adj E)  → Node → A → List (Adj E) → Context A E
-  
-  data Graph (A B : Set) : Set where
-    Empty : Graph A B
-    _&_   : Context A B → Graph A B → Graph A B
-  
-
+gpred : Graph N → N → List N
+gpred g n = {!!}
