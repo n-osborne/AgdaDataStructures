@@ -5,6 +5,8 @@ open import Product
 open import Fin
 open import IdentityRelation
 
+open Classical-Definitions
+
 data Vec {n} (A : Set n) : ℕ → Set n where
   []  : Vec A O
   _∷_ : ∀ {n : ℕ} (a : A) (as : Vec A n) → Vec A (S n)
@@ -25,7 +27,7 @@ zip : {A B : Set} → {n : ℕ} → Vec A n → Vec B n → Vec (Prod A B) n
 zip []       []       = []
 zip (x ∷ xs) (y ∷ ys) = (x × y) ∷ (zip xs ys)
 
-_++_ : ∀ {a m n} {A : Set a}  → Vec A m → Vec A n → Vec A (m + n)
+_++_ : ∀ {a m n} {A : Set a}  → Vec A m → Vec A n → Vec A (n + m)
 []       ++ ys = ys
 (x ∷ xs) ++ ys = x ∷ (xs ++ ys)
 
