@@ -3,7 +3,7 @@
 module Nat where
 
 open import Agda.Primitive
-open import Bool
+open import Bool renaming (¬ to not)
 open import IdentityRelation
 
 
@@ -35,6 +35,64 @@ data ℕ : Set where
 ℕ-ite a₀ f n = ℕ-rec a₀ (λ _ → f) n
 
 
+data _≤_ : ℕ -> ℕ -> Set where
+  `Z : ∀ {n} -> O ≤ n
+  `S : ∀ {n m} -> n ≤ m -> S n ≤ S m
+
+diff : ∀ {n m} -> n ≤ m -> ℕ
+diff {.O} {m} `Z = m
+diff {.(S _)} {.(S _)} (`S p) = S (diff p)
+
+data ⊥ : Set where
+
+¬ : Set -> Set
+¬ P = P -> ⊥
+
+_≰_ : ℕ -> ℕ -> Set
+n ≰ m = ¬ (n ≤ m) 
+
+data Dec (P : Set) : Set where
+  yes : P -> Dec P
+  no  : (P -> ⊥) -> Dec P
+
+¬s≤z : ∀ {n : ℕ} -> ¬ (S n ≤ O)
+¬s≤z = λ ()
+
+¬s≤s : ∀ {n m} -> ¬ (n ≤ m) -> ¬ (S n ≤ S m)
+¬s≤s ¬n≤m (`S n≤m) = ¬n≤m n≤m
+
+_≤?_ : (n : ℕ) -> (m : ℕ) -> Dec (n ≤ m)
+O ≤? m = yes `Z
+S n ≤? O = no (λ ())
+S n ≤? S m with n ≤? m
+... | yes n≤m = yes (`S n≤m)
+... | no ¬n≤m = no (¬s≤s ¬n≤m)
+
+_≡ᵇ_ : ℕ → ℕ → 𝔹
+O     ≡ᵇ O     = true
+(S n) ≡ᵇ (S m) = n ≡ᵇ m
+(S _) ≡ᵇ O     = false
+O     ≡ᵇ (S _) = false
+
+_<ᵇ_ : ℕ → ℕ → 𝔹
+O     <ᵇ (S n) = true
+(S n) <ᵇ (S m) = n <ᵇ m
+_     <ᵇ _     = false
+
+_≤ᵇ_ : ℕ → ℕ → 𝔹
+m ≤ᵇ n = (m <ᵇ n) ∨ (m ≡ᵇ n)
+
+_>ᵇ_ : ℕ → ℕ → 𝔹
+m >ᵇ n = not (m ≤ᵇ n)
+
+_≥ᵇ_ : ℕ → ℕ → 𝔹
+m ≥ᵇ n = not (m <ᵇ n)
+
+max : ℕ → ℕ → ℕ
+max O m = m
+max (S n) O = S n
+max (S n) (S m) = max n m
+
 
 module Classical-Definitions where
   -- classical definition of addition with explicit recursion on second argument
@@ -44,13 +102,16 @@ module Classical-Definitions where
 
   _-_ : ℕ → ℕ → ℕ
   n     - O     = n
-  O     - m     = O
+  O     - (S _) = O
   (S n) - (S m) = n - m
   
   _*_ : ℕ → ℕ → ℕ
-  O * _     = O
   _ * O     = O
   n * (S m) = n + (n * m)
+
+  _+[_]_ : ℕ -> ℕ -> ℕ → ℕ
+  a +[ n ] O = {!!}
+  a +[ n ] S b = {!!}
 
 
 
@@ -72,26 +133,3 @@ module HoFF-UF-inspired-Definitions where
   +-commutative : {m n : ℕ} → (n + m) ≡ (m + n)
   +-commutative {m} = ℕ-ind (λ n → (n + m) ≡ (m + n)) {!!} {!!} {!!}
 
-_≡ᵇ_ : ℕ → ℕ → 𝔹
-O     ≡ᵇ O     = true
-(S n) ≡ᵇ (S m) = n ≡ᵇ m
-_     ≡ᵇ _     = false
-
-_<ᵇ_ : ℕ → ℕ → 𝔹
-O     <ᵇ (S n) = true
-(S n) <ᵇ (S m) = n <ᵇ m
-_     <ᵇ _     = false
-
-_≤ᵇ_ : ℕ → ℕ → 𝔹
-m ≤ᵇ n = (m <ᵇ n) ∨ (m ≡ᵇ n)
-
-_>ᵇ_ : ℕ → ℕ → 𝔹
-m >ᵇ n = ¬ (m ≤ᵇ n)
-
-_≥ᵇ_ : ℕ → ℕ → 𝔹
-m ≥ᵇ n = ¬ (m <ᵇ n)
-
-max : ℕ → ℕ → ℕ
-max O m = m
-max n O = n
-max (S n) (S m) = max n m
