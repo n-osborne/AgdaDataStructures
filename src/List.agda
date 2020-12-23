@@ -42,6 +42,12 @@ elem : {A : Set} ⦃ eqA : Eq A ⦄ → A → List A → 𝔹
 elem _ [] = false
 elem a (x :: xs) = (a == x) ∨ (elem a xs)
 
+open import Fin
+
+lookupFin : ∀ {A}(l : List A) -> Fin (length l) -> A
+lookupFin (x :: _) fzero = x
+lookupFin (_ :: l) (fsuc n) = lookupFin l n
+
 module lookup-correct-by-construction where
   -- from Ulf Norell and James Chapman "Dependently Typed Programming in Agda"
 
@@ -76,3 +82,32 @@ module lookup-correct-by-construction where
   (x :: xs) ! S .(index p)       | inside y p = inside y (tl p)
   (x :: xs) ! S .(m + length xs) | outside m  = outside m
 
+
+
+data All {A}(P : A -> Set) : List A -> Set where
+  [] : All P []
+  _::_ : ∀ {a as} -> P a -> All P as -> All P (a :: as)
+
+data Any {A}(P : A -> Set) : List A -> Set where
+  here  : ∀ {a as} -> P a -> Any P (a :: as)
+  there : ∀ {a as} -> Any P as -> Any P (a :: as)
+
+open import IdentityRelation
+
+_∈_ : ∀ {A} -> A -> List A -> Set
+a ∈ as = Any (λ x -> a ≡ x) as
+
+index : ∀ {A}{as}{P : A -> Set} -> Any P as -> Fin (length as)
+index (here x) = fzero
+index (there p) = fsuc (index p)
+
+lookupAny : ∀ {A as P} -> Any P as -> A
+lookupAny {as = as} p = lookupFin as (index p)
+
+lookupAll : ∀ {A as a P} -> All P as -> a ∈ as -> A
+lookupAll {A}{as}{a}{P} p a∈as = lookupFin as (index a∈as)
+
+{-# BUILTIN EQUALITY _≡_ #-}
+lookupProof : ∀ {A : Set}{as}{a : A}{P} -> All P as -> a ∈ as -> P a
+lookupProof (x₁ :: all) (here x) rewrite x = x₁
+lookupProof {A}(_ :: all) (there a∈as) = lookupProof {A} all a∈as
